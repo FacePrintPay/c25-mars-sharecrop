@@ -3,22 +3,2436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>c25-mars-sharecrop | Constellation25 Sovereign Build</title>
+    <title>VRWAP - Virtual Reality Web Application Platform | Spatial Metaverse</title>
     <style>
-        body { font-family: 'Courier New', monospace; background: #0d0d0d; color: #00ff00; text-align: center; padding: 40px; margin: 0; }
-        h1 { text-shadow: 0 0 10px #00ff00; font-size: 2.5rem; margin-bottom: 10px; }
-        p { font-size: 1.2rem; color: #ccc; }
-        .badge { background: #003300; border: 1px solid #00ff00; padding: 10px 20px; border-radius: 5px; display: inline-block; margin-top: 20px; font-weight: bold; }
-        a { color: #00ff00; text-decoration: none; border-bottom: 1px dashed #00ff00; }
-        footer { margin-top: 50px; font-size: 0.8rem; opacity: 0.6; }
+        @import url('https://cdn.jsdelivr.net/fontsource/fonts/source-serif-4@latest/latin-400-normal.css');
+        @import url('https://cdn.jsdelivr.net/fontsource/fonts/source-serif-4@latest/latin-700-normal.css');
+        @import url('https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css');
+        @import url('https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.css');
+        @import url('https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2d5f7f;
+            --secondary: #c17f59;
+            --accent: #d4a574;
+            --mars: #b85c3e;
+            --gold: #d4af37;
+            --dark: #1a1f2e;
+            --darker: #0f1419;
+            --text: #e8e6e3;
+            --text-muted: #a8a29e;
+            --bg-card: rgba(30, 35, 50, 0.6);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--darker);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Starfield Canvas */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.4;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--darker);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 1s ease, visibility 1s ease;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-logo {
+            font-family: 'Source Serif 4', serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 30px;
+            letter-spacing: 0.1em;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 1px;
+            animation: loadProgress 3s ease-in-out forwards;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            30% { width: 30%; }
+            60% { width: 65%; }
+            100% { width: 100%; }
+        }
+
+        /* Main App Container */
+        #app {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            z-index: 2;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(15, 20, 25, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 1000;
+        }
+
+        .nav-logo {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-logo span {
+            font-size: 0.65em;
+            display: block;
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-link.active {
+            color: var(--secondary);
+            background: rgba(193, 127, 89, 0.1);
+        }
+
+        .nav-wallet {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .wallet-balance {
+            font-size: 0.85em;
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .wallet-btn {
+            padding: 8px 20px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wallet-btn:hover {
+            background: var(--mars);
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            padding: 100px 40px 60px;
+            min-height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* HOME Section */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: rgba(193, 127, 89, 0.15);
+            border: 1px solid rgba(193, 127, 89, 0.3);
+            border-radius: 20px;
+            font-size: 0.75em;
+            color: var(--secondary);
+            margin-bottom: 30px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 3.5em;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 25px;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: 1.15em;
+            color: var(--text-muted);
+            max-width: 650px;
+            margin: 0 auto 50px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 80px;
+        }
+
+        .btn-primary {
+            padding: 14px 32px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover {
+            background: var(--mars);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            padding: 14px 32px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .btn-gold {
+            padding: 14px 32px;
+            background: var(--gold);
+            border: none;
+            border-radius: 8px;
+            color: var(--dark);
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-gold:hover {
+            background: #e5c04b;
+            transform: translateY(-1px);
+        }
+
+        /* Feature Cards on Home */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 35px 30px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .feature-card:hover {
+            background: rgba(40, 45, 60, 0.8);
+            border-color: rgba(193, 127, 89, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.25em;
+            margin-bottom: 12px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .feature-card p {
+            font-size: 0.9em;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* MARS EXPLORER Section */
+        .mars-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .section-header {
+            margin-bottom: 40px;
+        }
+
+        .section-header h2 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 2.5em;
+            margin-bottom: 12px;
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .section-header p {
+            font-size: 1.05em;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .mars-viewer {
+            width: 100%;
+            height: 450px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: radial-gradient(ellipse at center, #2a1510 0%, #1a1f2e 70%);
+        }
+
+        .mars-planet {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle at 30% 30%, #b85c3e, #8b3a2a, #5a2518);
+            box-shadow: 0 0 80px rgba(184, 92, 62, 0.3), inset -30px -30px 60px rgba(0,0,0,0.6);
+            animation: rotateMars 30s linear infinite;
+        }
+
+        @keyframes rotateMars {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .mars-surface-detail {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: 
+                radial-gradient(circle at 20% 40%, rgba(139, 58, 42, 0.9) 0%, transparent 15%),
+                radial-gradient(circle at 60% 30%, rgba(200, 120, 80, 0.7) 0%, transparent 10%),
+                radial-gradient(circle at 40% 70%, rgba(100, 40, 20, 0.8) 0%, transparent 20%),
+                radial-gradient(circle at 75% 60%, rgba(180, 100, 60, 0.6) 0%, transparent 12%);
+        }
+
+        .mars-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .mars-info {
+            background: rgba(0,0,0,0.6);
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        .mars-info span {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .mars-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mars-ctrl-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1em;
+        }
+
+        .mars-ctrl-btn:hover {
+            background: rgba(193, 127, 89, 0.2);
+            border-color: var(--secondary);
+        }
+
+        .mars-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .mars-stat {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .mars-stat-value {
+            font-family: 'Source Serif 4', serif;
+            font-size: 2em;
+            color: var(--secondary);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .mars-stat-label {
+            font-size: 0.85em;
+            color: var(--text-muted);
+        }
+
+        /* REAL ESTATE Section */
+        .realestate-container {
+            max-width: 100%;
+        }
+
+        .land-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .land-plot {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .land-plot:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .land-plot.sold {
+            opacity: 0.6;
+        }
+
+        .land-plot.staked {
+            border-color: var(--secondary);
+            background: rgba(193, 127, 89, 0.08);
+        }
+
+        .land-plot-img {
+            width: 100%;
+            height: 140px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #3d1a0a, #8b3a2a);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .land-plot-img::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 15px,
+                rgba(255,255,255,0.02) 15px,
+                rgba(255,255,255,0.02) 16px
+            );
+        }
+
+        .land-plot h4 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.05em;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .land-plot .price {
+            font-size: 1.1em;
+            color: var(--gold);
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .land-plot .coords {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+        .land-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-available {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge-sold {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-staked {
+            background: rgba(193, 127, 89, 0.2);
+            color: var(--secondary);
+            border: 1px solid rgba(193, 127, 89, 0.3);
+        }
+
+        /* GOLDEN TICKET Section */
+        .ticket-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .ticket-hero {
+            text-align: center;
+            max-width: 700px;
+        }
+
+        .ticket-hero h2 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 2.8em;
+            color: var(--gold);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .ticket-hero p {
+            color: var(--text-muted);
+            font-size: 1.1em;
+            line-height: 1.7;
+        }
+
+        .golden-ticket {
+            width: 380px;
+            height: 200px;
+            background: linear-gradient(135deg, #d4af37, #b8941f, #d4af37);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.2);
+            animation: ticketFloat 4s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .golden-ticket:hover {
+            transform: scale(1.02);
+        }
+
+        @keyframes ticketFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .golden-ticket h3 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.6em;
+            color: var(--dark);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .golden-ticket .ticket-number {
+            font-size: 0.9em;
+            color: rgba(0,0,0,0.6);
+            font-family: monospace;
+        }
+
+        .golden-ticket .ticket-prize {
+            margin-top: 12px;
+            font-size: 0.85em;
+            color: rgba(0,0,0,0.8);
+            font-weight: 600;
+        }
+
+        .ticket-game {
+            width: 100%;
+            max-width: 550px;
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 16px;
+            padding: 35px;
+            text-align: center;
+        }
+
+        .ticket-game h3 {
+            font-family: 'Source Serif 4', serif;
+            color: var(--gold);
+            margin-bottom: 25px;
+            font-size: 1.5em;
+        }
+
+        .scratch-card {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(135deg, #2a2f3e, #1a1f2e);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            margin-bottom: 25px;
+        }
+
+        .scratch-card .scratch-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #8a8a8a, #6a6a6a, #8a8a8a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+            font-family: 'Source Serif 4', serif;
+            color: #333;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .scratch-card.revealed .scratch-overlay {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .scratch-card .scratch-result {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.4em;
+            color: var(--gold);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .ticket-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .ticket-stat {
+            background: rgba(212, 175, 55, 0.08);
+            border-radius: 8px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .ticket-stat-value {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.4em;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .ticket-stat-label {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* SPACE RIDE Section */
+        .ride-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .ride-viewport {
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #000;
+        }
+
+        .ride-earth {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            bottom: -250px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle at 40% 30%, #4a9eff, #1a5276, #0a2a4a);
+            box-shadow: 0 0 60px rgba(74, 158, 255, 0.2);
+            transition: all 2s ease;
+        }
+
+        .ride-earth.launched {
+            bottom: -700px;
+            transform: translateX(-50%) scale(0.5);
+        }
+
+        .ride-atmosphere {
+            position: absolute;
+            width: 520px;
+            height: 520px;
+            border-radius: 50%;
+            bottom: -260px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, transparent 48%, rgba(74, 158, 255, 0.15) 50%, transparent 52%);
+            transition: all 2s ease;
+        }
+
+        .ride-atmosphere.launched {
+            bottom: -710px;
+            transform: translateX(-50%) scale(0.5);
+        }
+
+        .ride-ship {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5em;
+            transition: all 2s ease;
+        }
+
+        .ride-ship.launched {
+            bottom: 80%;
+            transform: translateX(-50%) scale(0.7);
+        }
+
+        .ride-hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .ride-hud-item {
+            background: rgba(0,0,0,0.7);
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+
+        .ride-hud-item span {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .ride-controls {
+            text-align: center;
+        }
+
+        .launch-btn {
+            padding: 18px 45px;
+            background: var(--mars);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .launch-btn:hover {
+            background: #9d4d33;
+            transform: translateY(-1px);
+        }
+
+        .launch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ride-status {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        /* AI GUIDE Section */
+        .ai-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .ai-header {
+            text-align: center;
+        }
+
+        .ai-header h2 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 2.2em;
+            color: var(--text);
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .ai-chat {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 30px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .ai-message {
+            display: flex;
+            gap: 12px;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .ai-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+
+        .ai-message:not(.user) .ai-avatar {
+            background: rgba(193, 127, 89, 0.2);
+        }
+
+        .ai-message.user .ai-avatar {
+            background: rgba(45, 95, 127, 0.2);
+        }
+
+        .ai-bubble {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .ai-message:not(.user) .ai-bubble {
+            background: rgba(193, 127, 89, 0.1);
+            border: 1px solid rgba(193, 127, 89, 0.2);
+            border-top-left-radius: 4px;
+        }
+
+        .ai-message.user .ai-bubble {
+            background: rgba(45, 95, 127, 0.1);
+            border: 1px solid rgba(45, 95, 127, 0.2);
+            border-top-right-radius: 4px;
+        }
+
+        .ai-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-input {
+            flex: 1;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.9em;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s ease;
+        }
+
+        .ai-input:focus {
+            border-color: var(--secondary);
+        }
+
+        .ai-send {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: var(--secondary);
+            border: none;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-send:hover {
+            background: var(--mars);
+        }
+
+        .ai-suggestions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .ai-suggestion {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .ai-suggestion:hover {
+            border-color: var(--secondary);
+            color: var(--secondary);
+            background: rgba(193, 127, 89, 0.05);
+        }
+
+        /* EDUCATION Section */
+        .edu-container {
+            max-width: 100%;
+        }
+
+        .edu-modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .edu-module {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .edu-module:hover {
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .edu-module-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .edu-module-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4em;
+        }
+
+        .edu-module h3 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.1em;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .edu-module p {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .edu-progress {
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .edu-progress-bar {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .edu-progress-text {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* WALLET Section */
+        .wallet-container {
+            max-width: 700px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .wallet-card {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .wallet-card h2 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .wallet-address {
+            background: rgba(0,0,0,0.3);
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: var(--secondary);
+            margin: 20px 0;
+            word-break: break-all;
+        }
+
+        .wallet-assets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .wallet-asset {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .wallet-asset-icon {
+            font-size: 1.5em;
+            margin-bottom: 8px;
+        }
+
+        .wallet-asset-name {
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+
+        .wallet-asset-value {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.2em;
+            color: var(--gold);
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            top: 90px;
+            right: 30px;
+            background: rgba(20, 25, 35, 0.95);
+            border: 1px solid var(--secondary);
+            border-radius: 10px;
+            padding: 16px 24px;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-icon {
+            font-size: 1.2em;
+        }
+
+        .toast-message {
+            font-size: 0.85em;
+            color: var(--text);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--dark);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h3 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.6em;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+
+        .modal p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .modal-close {
+            padding: 12px 30px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(193, 127, 89, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.2em;
+            }
+
+            .mars-viewer {
+                height: 300px;
+            }
+
+            .mars-planet {
+                width: 200px;
+                height: 200px;
+            }
+
+            .golden-ticket {
+                width: 300px;
+                height: 160px;
+            }
+
+            .ride-viewport {
+                height: 350px;
+            }
+
+            .section {
+                padding: 90px 20px 40px;
+            }
+
+            .nav-bar {
+                padding: 0 20px;
+            }
+        }
+
+        .mobile-nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-nav-toggle {
+                display: block;
+            }
+
+            .nav-links.mobile-open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: rgba(15, 20, 25, 0.98);
+                padding: 20px;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+            }
+        }
+
+        /* Rewards counter */
+        .rewards-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 20, 25, 0.95);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 10px;
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .reward-item .reward-icon {
+            font-size: 1.1em;
+        }
+
+        .reward-item .reward-value {
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .xp-bar {
+            width: 80px;
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Filter buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .filter-btn.active {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <h1>⚡ c25-mars-sharecrop</h1>
-    <p>Sovereign Build Deployed via Constellation25 Agents</p>
-    <div class="badge">Powered by Banani AI & CyGeL</div>
-    <br><br>
-    <a href="#">Access Application Interface</a>
-    <footer>© 2024 CyGeL White • FacePrintPay Ecosystem • Localhost Sovereignty</footer>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-logo">VRWAP</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+        <div class="loading-text">Initializing Spatial Metaverse...</div>
+    </div>
+
+    <!-- Starfield Background -->
+    <canvas id="starfield"></canvas>
+
+    <!-- Main App -->
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <div class="nav-logo" onclick="navigateTo('home')">
+                VRWAP
+                <span>Spatial Metaverse</span>
+            </div>
+            <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+            <div class="nav-links" id="navLinks">
+                <div class="nav-link active" data-section="home" onclick="navigateTo('home')">Home</div>
+                <div class="nav-link" data-section="mars" onclick="navigateTo('mars')">Mars Explorer</div>
+                <div class="nav-link" data-section="realestate" onclick="navigateTo('realestate')">Real Estate</div>
+                <div class="nav-link" data-section="ticket" onclick="navigateTo('ticket')">Golden Ticket</div>
+                <div class="nav-link" data-section="ride" onclick="navigateTo('ride')">Space Ride</div>
+                <div class="nav-link" data-section="ai" onclick="navigateTo('ai')">AI Guide</div>
+                <div class="nav-link" data-section="edu" onclick="navigateTo('edu')">Learn</div>
+                <div class="nav-link" data-section="wallet" onclick="navigateTo('wallet')">Wallet</div>
+            </div>
+            <div class="nav-wallet">
+                <div class="wallet-balance" id="navBalance">0 MF</div>
+                <button class="wallet-btn" onclick="navigateTo('wallet')">Connect</button>
+            </div>
+        </nav>
+
+        <!-- HOME Section -->
+        <div class="section active" id="section-home">
+            <div class="hero">
+                <div class="hero-badge">Beta v0.1 — Early Access</div>
+                <h1>Welcome to the<br>Spatial Metaverse</h1>
+                <p>VRWAP combines virtual reality, spatial mapping, digital real estate, NASA-grade education, and AI guidance into one immersive platform. Own land on Mars, earn MarsFiat currency, and win a real trip to space.</p>
+                <div class="hero-buttons">
+                    <button class="btn-primary" onclick="navigateTo('mars')">Explore Mars</button>
+                    <button class="btn-gold" onclick="navigateTo('ticket')">Win a Trip to Space</button>
+                    <button class="btn-secondary" onclick="navigateTo('ride')">Ride to Edge of Earth</button>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card" onclick="navigateTo('mars')">
+                        <span class="feature-icon">🔴</span>
+                        <h3>Mars Explorer</h3>
+                        <p>Navigate real Mars terrain in 3D. View rover paths, landing sites, and stake your claim on the Red Planet.</p>
+                    </div>
+                    <div class="feature-card" onclick="navigateTo('realestate')">
+                        <span class="feature-icon">🏗️</span>
+                        <h3>Virtual Real Estate</h3>
+                        <p>Own digital land on Mars as NFTs. Stake claims, earn rewards, and build the infrastructure of tomorrow.</p>
+                    </div>
+                    <div class="feature-card" onclick="navigateTo('ticket')">
+                        <span class="feature-icon">🎫</span>
+                        <h3>GoldenTicket2Space</h3>
+                        <p>Enter our sweepstakes for a chance to win a commercial space flight adventure. Your ticket to the stars!</p>
+                    </div>
+                    <div class="feature-card" onclick="navigateTo('ride')">
+                        <span class="feature-icon">🌍</span>
+                        <h3>Edge of Earth Ride</h3>
+                        <p>Experience a virtual journey to the edge of Earth's atmosphere. Feel the Overview Effect from your browser.</p>
+                    </div>
+                    <div class="feature-card" onclick="navigateTo('ai')">
+                        <span class="feature-icon">🤖</span>
+                        <h3>AI Space Guide</h3>
+                        <p>Your personal AI companion guides you through the metaverse, answering questions about space, crypto, and more.</p>
+                    </div>
+                    <div class="feature-card" onclick="navigateTo('edu')">
+                        <span class="feature-icon">📚</span>
+                        <h3>Learn & Earn</h3>
+                        <p>Educational modules on Web3, blockchain, space science, and digital economics. Earn MarsFiat as you learn!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MARS EXPLORER Section -->
+        <div class="section" id="section-mars">
+            <div class="mars-container">
+                <div class="section-header">
+                    <h2>Mars Explorer</h2>
+                    <p>Navigate the Red Planet in real-time 3D terrain visualization</p>
+                </div>
+                
+                <div class="mars-viewer" id="marsViewer">
+                    <div class="mars-overlay">
+                        <div class="mars-info">
+                            <span>LAT:</span> <span id="marsLat">-4.5895°</span> | 
+                            <span>LON:</span> <span id="marsLon">137.4330°</span>
+                        </div>
+                        <div class="mars-controls">
+                            <div class="mars-ctrl-btn" onclick="zoomMars('in')">+</div>
+                            <div class="mars-ctrl-btn" onclick="zoomMars('out')">−</div>
+                            <div class="mars-ctrl-btn" onclick="rotateMarsView()">↻</div>
+                        </div>
+                    </div>
+                    <div class="mars-planet">
+                        <div class="mars-surface-detail"></div>
+                    </div>
+                </div>
+
+                <div class="mars-stats">
+                    <div class="mars-stat">
+                        <div class="mars-stat-value">58</div>
+                        <div class="mars-stat-label">Languages Supported</div>
+                    </div>
+                    <div class="mars-stat">
+                        <div class="mars-stat-value">5m</div>
+                        <div class="mars-stat-label">Per Pixel Resolution</div>
+                    </div>
+                    <div class="mars-stat">
+                        <div class="mars-stat-value">6</div>
+                        <div class="mars-stat-label">Rover Paths Tracked</div>
+                    </div>
+                    <div class="mars-stat">
+                        <div class="mars-stat-value">1.6B</div>
+                        <div class="mars-stat-label">PIX Land Parcels</div>
+                    </div>
+                </div>
+
+                <div class="features-grid" style="margin-top: 30px;">
+                    <div class="feature-card" onclick="showToast('Loading Perseverance landing site...')">
+                        <span class="feature-icon">🛸</span>
+                        <h3>Perseverance Rover</h3>
+                        <p>Track the path of NASA's Perseverance rover in real-time on Jezero Crater.</p>
+                    </div>
+                    <div class="feature-card" onclick="showToast('Ingenuity helicopter path loaded!')">
+                        <span class="feature-icon">🚁</span>
+                        <h3>Ingenuity Helicopter</h3>
+                        <p>View flight paths of the first helicopter to fly on another planet.</p>
+                    </div>
+                    <div class="feature-card" onclick="showToast('Olympus Mons - tallest volcano in solar system!')">
+                        <span class="feature-icon">🌋</span>
+                        <h3>Olympus Mons</h3>
+                        <p>Explore the largest volcano in our solar system — 72,000 ft tall!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REAL ESTATE Section -->
+        <div class="section" id="section-realestate">
+            <div class="realestate-container">
+                <div class="section-header">
+                    <h2>Mars Virtual Real Estate</h2>
+                    <p>Stake your claim on the Red Planet. 1.6 Billion PIX parcels available as NFTs.</p>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="filter-btn active" onclick="filterLand('all', this)">All Parcels</button>
+                    <button class="filter-btn" onclick="filterLand('available', this)">Available</button>
+                    <button class="filter-btn" onclick="filterLand('staked', this)">My Claims</button>
+                </div>
+
+                <div class="land-grid" id="landGrid">
+                    <!-- Land plots generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- GOLDEN TICKET Section -->
+        <div class="section" id="section-ticket">
+            <div class="ticket-container">
+                <div class="ticket-hero">
+                    <h2>GoldenTicket2Space™</h2>
+                    <p>Remember the excitement of golden tickets in Wonka bars? Imagine that thrill multiplied by infinity. Win a real commercial space flight adventure!</p>
+                </div>
+
+                <div class="golden-ticket" onclick="scratchTicket()">
+                    <h3>GOLDEN TICKET</h3>
+                    <div class="ticket-number">#<span id="ticketNum">000000</span></div>
+                    <div class="ticket-prize">🏆 WINNER: Commercial Space Flight</div>
+                </div>
+
+                <div class="ticket-game">
+                    <h3>Scratch & Win</h3>
+                    <div class="scratch-card" id="scratchCard" onclick="scratchTicket()">
+                        <div class="scratch-overlay" id="scratchOverlay">
+                            TAP TO SCRATCH
+                        </div>
+                        <div class="scratch-result" id="scratchResult"></div>
+                    </div>
+                    <button class="btn-gold" onclick="buyTicket()">Buy Ticket — $9.99</button>
+                    
+                    <div class="ticket-stats">
+                        <div class="ticket-stat">
+                            <div class="ticket-stat-value" id="ticketsSold">147,832</div>
+                            <div class="ticket-stat-label">Tickets Sold</div>
+                        </div>
+                        <div class="ticket-stat">
+                            <div class="ticket-stat-value">200,000</div>
+                            <div class="ticket-stat-label">Total Available</div>
+                        </div>
+                        <div class="ticket-stat">
+                            <div class="ticket-stat-value">1 in 200K</div>
+                            <div class="ticket-stat-label">Your Odds</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; max-width: 600px; margin-top: 20px;">
+                    <p style="color: var(--text-muted); font-size: 0.85em; line-height: 1.6;">
+                        Partnership with L.E.A.P non-profit promoting STEM education. 
+                        Each ticket purchase supports space curriculum development for schools worldwide.
+                        <br><br>
+                        <em>Terms and conditions apply. Must be 18+ to enter. No purchase necessary to enter — see official rules.</em>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SPACE RIDE Section -->
+        <div class="section" id="section-ride">
+            <div class="ride-container">
+                <div class="section-header" style="text-align: center;">
+                    <h2>Ride to the Edge of Earth</h2>
+                    <p>Experience the Overview Effect — a virtual journey beyond our atmosphere</p>
+                </div>
+
+                <div class="ride-viewport" id="rideViewport">
+                    <div class="ride-hud">
+                        <div class="ride-hud-item">ALT: <span id="rideAlt">0 km</span></div>
+                        <div class="ride-hud-item">SPD: <span id="rideSpd">0 km/h</span></div>
+                        <div class="ride-hud-item">STATUS: <span id="rideStatus">STANDBY</span></div>
+                    </div>
+                    <div class="ride-atmosphere" id="rideAtmosphere"></div>
+                    <div class="ride-earth" id="rideEarth"></div>
+                    <div class="ride-ship" id="rideShip">🚀</div>
+                </div>
+
+                <div class="ride-controls">
+                    <button class="launch-btn" id="launchBtn" onclick="launchRide()">
+                        LAUNCH
+                    </button>
+                    <div class="ride-status" id="rideStatusText">Press LAUNCH to begin your journey to the edge of space</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI GUIDE Section -->
+        <div class="section" id="section-ai">
+            <div class="ai-container">
+                <div class="ai-header">
+                    <h2>Nova — Your AI Space Guide</h2>
+                    <p style="color: var(--text-muted);">Ask me anything about the metaverse, Mars, Web3, or space exploration</p>
+                </div>
+
+                <div class="ai-chat">
+                    <div class="ai-messages" id="aiMessages">
+                        <div class="ai-message">
+                            <div class="ai-avatar">🤖</div>
+                            <div class="ai-bubble">
+                                Hello, Explorer! I'm <strong>Nova</strong>, your AI guide through the VRWAP Spatial Metaverse. I can help you navigate Mars, understand Web3, stake virtual land, or answer any space-related questions. What would you like to explore today?
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ai-input-container">
+                        <input type="text" class="ai-input" id="aiInput" placeholder="Ask Nova anything..." onkeypress="if(event.key==='Enter')sendAiMessage()">
+                        <button class="ai-send" onclick="sendAiMessage()">➤</button>
+                    </div>
+
+                    <div class="ai-suggestions">
+                        <div class="ai-suggestion" onclick="askSuggestion('How do I stake land on Mars?')">How do I stake land?</div>
+                        <div class="ai-suggestion" onclick="askSuggestion('What is MarsFiat currency?')">What is MarsFiat?</div>
+                        <div class="ai-suggestion" onclick="askSuggestion('Tell me about Web3')">Tell me about Web3</div>
+                        <div class="ai-suggestion" onclick="askSuggestion('How does the Golden Ticket work?')">Golden Ticket info</div>
+                        <div class="ai-suggestion" onclick="askSuggestion('What can I learn here?')">What can I learn?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDUCATION Section -->
+        <div class="section" id="section-edu">
+            <div class="edu-container">
+                <div class="section-header">
+                    <h2>Learn & Earn</h2>
+                    <p>Complete modules to earn MarsFiat rewards and unlock new capabilities</p>
+                </div>
+
+                <div class="edu-modules">
+                    <div class="edu-module" onclick="startModule('web3')">
+                        <div class="edu-module-header">
+                            <div class="edu-module-icon" style="background: rgba(123, 47, 247, 0.15);">🔗</div>
+                            <div>
+                                <h3>Web3 Fundamentals</h3>
+                                <div class="edu-progress-text">Module 1 of 8</div>
+                            </div>
+                        </div>
+                        <p>Understand blockchain, decentralization, and how Web3 is reshaping the internet.</p>
+                        <div class="edu-progress">
+                            <div class="edu-progress-bar" style="width: 65%;"></div>
+                        </div>
+                        <div class="edu-progress-text">65% Complete — Earn 50 MF</div>
+                    </div>
+
+                    <div class="edu-module" onclick="startModule('mars')">
+                        <div class="edu-module-header">
+                            <div class="edu-module-icon" style="background: rgba(184, 92, 62, 0.15);">🔴</div>
+                            <div>
+                                <h3>Mars Science 101</h3>
+                                <div class="edu-progress-text">Module 1 of 6</div>
+                            </div>
+                        </div>
+                        <p>Learn about Mars geology, atmosphere, and what it takes to colonize the Red Planet.</p>
+                        <div class="edu-progress">
+                            <div class="edu-progress-bar" style="width: 30%;"></div>
+                        </div>
+                        <div class="edu-progress-text">30% Complete — Earn 30 MF</div>
+                    </div>
+
+                    <div class="edu-module" onclick="startModule('crypto')">
+                        <div class="edu-module-header">
+                            <div class="edu-module-icon" style="background: rgba(212, 175, 55, 0.15);">💰</div>
+                            <div>
+                                <h3>Digital Currency & MarsFiat</h3>
+                                <div class="edu-progress-text">Module 1 of 5</div>
+                            </div>
+                        </div>
+                        <p>Understand fiat money, cryptocurrency, and how MarsFiat creates a new economic model for space.</p>
+                        <div class="edu-progress">
+                            <div class="edu-progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="edu-progress-text">Not Started — Earn 40 MF</div>
+                    </div>
+
+                    <div class="edu-module" onclick="startModule('nft')">
+                        <div class="edu-module-header">
+                            <div class="edu-module-icon" style="background: rgba(45, 95, 127, 0.15);">🖼️</div>
+                            <div>
+                                <h3>NFTs & Digital Ownership</h3>
+                                <div class="edu-progress-text">Module 1 of 4</div>
+                            </div>
+                        </div>
+                        <p>Learn how NFTs work, how to mint them, and how digital ownership is changing real estate.</p>
+                        <div class="edu-progress">
+                            <div class="edu-progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="edu-progress-text">Not Started — Earn 35 MF</div>
+                    </div>
+
+                    <div class="edu-module" onclick="startModule('space')">
+                        <div class="edu-module-header">
+                            <div class="edu-module-icon" style="background: rgba(74, 158, 255, 0.15);">🌌</div>
+                            <div>
+                                <h3>Space Exploration History</h3>
+                                <div class="edu-progress-text">Module 1 of 10</div>
+                            </div>
+                        </div>
+                        <p>From Apollo to Artemis — explore humanity's greatest adventures beyond Earth.</p>
+                        <div class="edu-progress">
+                            <div class="edu-progress-bar" style="width: 10%;"></div>
+                        </div>
+                        <div class="edu-progress-text">10% Complete — Earn 25 MF</div>
+                    </div>
+
+                    <div class="edu-module" onclick="startModule('metaverse')">
+                        <div class="edu-module-header">
+                            <div class="edu-module-icon" style="background: rgba(193, 127, 89, 0.15);">🌐</div>
+                            <div>
+                                <h3>Metaverse Architecture</h3>
+                                <div class="edu-progress-text">Module 1 of 7</div>
+                            </div>
+                        </div>
+                        <p>Design and build virtual structures. Learn spatial computing and 3D world-building.</p>
+                        <div class="edu-progress">
+                            <div class="edu-progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="edu-progress-text">Not Started — Earn 45 MF</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WALLET Section -->
+        <div class="section" id="section-wallet">
+            <div class="wallet-container">
+                <div class="wallet-card">
+                    <h2>Your Wallet</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 15px;">Connect your crypto wallet or create a new one</p>
+                    
+                    <div class="wallet-address" id="walletAddress">
+                        Not Connected — Click below to connect
+                    </div>
+
+                    <button class="btn-primary" id="connectWalletBtn" onclick="connectWallet()">
+                        Connect Wallet
+                    </button>
+
+                    <div class="wallet-assets" id="walletAssets" style="display: none;">
+                        <div class="wallet-asset">
+                            <div class="wallet-asset-icon">🪙</div>
+                            <div class="wallet-asset-name">MarsFiat</div>
+                            <div class="wallet-asset-value" id="mfBalance">0 MF</div>
+                        </div>
+                        <div class="wallet-asset">
+                            <div class="wallet-asset-icon">🏠</div>
+                            <div class="wallet-asset-name">Land NFTs</div>
+                            <div class="wallet-asset-value" id="nftCount">0</div>
+                        </div>
+                        <div class="wallet-asset">
+                            <div class="wallet-asset-icon">🎫</div>
+                            <div class="wallet-asset-name">Golden Tickets</div>
+                            <div class="wallet-asset-value" id="ticketCount">0</div>
+                        </div>
+                        <div class="wallet-asset">
+                            <div class="wallet-asset-icon">⭐</div>
+                            <div class="wallet-asset-name">XP Level</div>
+                            <div class="wallet-asset-value" id="xpLevel">1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wallet-actions" id="walletActions" style="display: none;">
+                    <button class="btn-primary" onclick="navigateTo('realestate')">Buy Land</button>
+                    <button class="btn-secondary" onclick="navigateTo('ticket')">Get Tickets</button>
+                    <button class="btn-secondary" onclick="navigateTo('edu')">Earn More</button>
+                </div>
+
+                <div style="text-align: center; max-width: 500px; margin-top: 20px;">
+                    <p style="color: var(--text-muted); font-size: 0.8em; line-height: 1.6;">
+                        Your wallet is secured with military-grade encryption. MarsFiat (MF) is the native currency of the VRWAP metaverse, earned through exploration, education, and land staking.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards Bar -->
+    <div class="rewards-bar">
+        <div class="reward-item">
+            <span class="reward-icon">🪙</span>
+            <span class="reward-value" id="rewardMF">0 MF</span>
+        </div>
+        <div class="reward-item">
+            <span class="reward-icon">⭐</span>
+            <span>Level <span class="reward-value" id="rewardLevel">1</span></span>
+        </div>
+        <div class="reward-item">
+            <div class="xp-bar">
+                <div class="xp-fill" id="xpFill" style="width: 0%;"></div>
+            </div>
+            <span style="font-size: 0.75em; color: var(--text-muted);" id="xpText">0/100 XP</span>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✓</span>
+        <span class="toast-message" id="toastMessage">Action completed!</span>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="modalTitle">Welcome!</h3>
+            <p id="modalBody">Modal content here.</p>
+            <button class="modal-close" onclick="closeModal()">Got it!</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ STARFIELD ============
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 200; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5,
+                    opacity: Math.random() * 0.5 + 0.2
+                });
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animateStars);
+        }
+
+        resizeCanvas();
+        initStars();
+        animateStars();
+        window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+        // ============ APP STATE ============
+        let state = {
+            connected: false,
+            walletAddress: '',
+            marsFiat: 0,
+            xp: 0,
+            level: 1,
+            nfts: 0,
+            tickets: 0,
+            currentSection: 'home',
+            rideLaunched: false
+        };
+
+        // ============ LOADING ============
+        setTimeout(() => {
+            document.getElementById('loading-screen').classList.add('hidden');
+            setTimeout(() => {
+                showModal('Welcome to VRWAP', 
+                    'You\'ve entered the Spatial Metaverse Beta! Explore Mars, stake virtual land, learn about Web3, and enter to win a real trip to space with GoldenTicket2Space™. Use the navigation above or arrow keys to explore.');
+            }, 500);
+        }, 3500);
+
+        // ============ NAVIGATION ============
+        function navigateTo(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(`section-${section}`).classList.add('active');
+            document.querySelector(`.nav-link[data-section="${section}"]`)?.classList.add('active');
+            
+            state.currentSection = section;
+            document.getElementById('navLinks').classList.remove('mobile-open');
+            
+            if (section !== 'home') {
+                addXP(5);
+            }
+        }
+
+        function toggleMobileNav() {
+            document.getElementById('navLinks').classList.toggle('mobile-open');
+        }
+
+        // Arrow key navigation
+        const sections = ['home', 'mars', 'realestate', 'ticket', 'ride', 'ai', 'edu', 'wallet'];
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                let idx = sections.indexOf(state.currentSection);
+                idx = (idx + 1) % sections.length;
+                navigateTo(sections[idx]);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                let idx = sections.indexOf(state.currentSection);
+                idx = (idx - 1 + sections.length) % sections.length;
+                navigateTo(sections[idx]);
+            }
+        });
+
+        // ============ MARS EXPLORER ============
+        let marsZoom = 1;
+
+        function zoomMars(dir) {
+            const planet = document.querySelector('.mars-planet');
+            if (dir === 'in') marsZoom = Math.min(2, marsZoom + 0.2);
+            else marsZoom = Math.max(0.5, marsZoom - 0.2);
+            planet.style.transform = `translate(-50%, -50%) scale(${marsZoom})`;
+            showToast(`Zoom: ${Math.round(marsZoom * 100)}%`);
+        }
+
+        function rotateMarsView() {
+            const planet = document.querySelector('.mars-planet');
+            planet.style.animationDuration = planet.style.animationDuration === '10s' ? '30s' : '10s';
+            showToast('Rotation speed changed');
+        }
+
+        // Update coordinates periodically
+        setInterval(() => {
+            const lat = (Math.random() * 90 - 45).toFixed(4);
+            const lon = (Math.random() * 360 - 180).toFixed(4);
+            document.getElementById('marsLat').textContent = lat + '°';
+            document.getElementById('marsLon').textContent = lon + '°';
+        }, 3000);
+
+        // ============ REAL ESTATE ============
+        const districtNames = ['Olympus Heights', 'Valles Vista', 'Jezero Junction', 'Hellas Haven', 'Elysium Estates', 'Gale Gardens', 'Cydonia Commons', 'Polar Peaks', 'Syrtis Shores', 'Arcadia Acres', 'Utopia Uplands', 'Noctis Nexus'];
+        const landFeatures = ['Crater View', 'Rover Path Adjacent', 'High Elevation', 'Water Ice Detected', 'Solar Optimal', 'Shielded Terrain', 'Ancient Riverbed', 'Mineral Rich'];
+
+        function generateLandPlots() {
+            const grid = document.getElementById('landGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 12; i++) {
+                const status = i < 3 ? 'staked' : (i < 5 ? 'sold' : 'available');
+                const price = (Math.random() * 500 + 50).toFixed(0);
+                const name = districtNames[i];
+                const feature = landFeatures[Math.floor(Math.random() * landFeatures.length)];
+                const lat = (Math.random() * 90 - 45).toFixed(2);
+                const lon = (Math.random() * 360 - 180).toFixed(2);
+
+                const plot = document.createElement('div');
+                plot.className = `land-plot ${status}`;
+                plot.setAttribute('data-status', status);
+                plot.innerHTML = `
+                    <span class="land-badge badge-${status}">${status}</span>
+                    <div class="land-plot-img"></div>
+                    <h4>${name}</h4>
+                    <div style="font-size: 0.8em; color: var(--text-muted); margin-bottom: 5px;">${feature}</div>
+                    <div class="price">${price} MF</div>
+                    <div class="coords">LAT: ${lat}° LON: ${lon}°</div>
+                `;
+                
+                if (status === 'available') {
+                    plot.onclick = () => stakePlot(name, price);
+                } else if (status === 'sold') {
+                    plot.onclick = () => showToast('This plot is already claimed by another explorer.');
+                } else {
+                    plot.onclick = () => showToast(`You own this plot: ${name}`);
+                }
+                
+                grid.appendChild(plot);
+            }
+        }
+
+        function stakePlot(name, price) {
+            if (!state.connected) {
+                showToast('Connect your wallet first to stake land!');
+                navigateTo('wallet');
+                return;
+            }
+            if (state.marsFiat < parseInt(price)) {
+                showToast(`Not enough MarsFiat. Need ${price} MF, have ${state.marsFiat} MF`);
+                return;
+            }
+            
+            state.marsFiat -= parseInt(price);
+            state.nfts++;
+            addXP(25);
+            updateUI();
+            showToast(`You staked "${name}" for ${price} MF! NFT minted!`);
+            generateLandPlots();
+        }
+
+        function filterLand(filter, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            document.querySelectorAll('.land-plot').forEach(plot => {
+                if (filter === 'all') {
+                    plot.style.display = 'block';
+                } else if (filter === 'available') {
+                    plot.style.display = plot.dataset.status === 'available' ? 'block' : 'none';
+                } else if (filter === 'staked') {
+                    plot.style.display = plot.dataset.status === 'staked' ? 'block' : 'none';
+                }
+            });
+        }
+
+        generateLandPlots();
+
+        // ============ GOLDEN TICKET ============
+        let ticketRevealed = false;
+        const prizes = [
+            '+10 MarsFiat!',
+            '+25 XP!',
+            'Free Ticket Entry!',
+            '+50 MarsFiat!',
+            'Rare NFT Drop!',
+            '+50 XP!',
+            '+5 MarsFiat',
+            'Try Again!'
+        ];
+
+        function scratchTicket() {
+            if (ticketRevealed) return;
+            ticketRevealed = true;
+            
+            const card = document.getElementById('scratchCard');
+            const overlay = document.getElementById('scratchOverlay');
+            const result = document.getElementById('scratchResult');
+            
+            const prize = prizes[Math.floor(Math.random() * prizes.length)];
+            
+            setTimeout(() => {
+                card.classList.add('revealed');
+                result.textContent = prize;
+                
+                if (prize.includes('MarsFiat')) {
+                    const amount = parseInt(prize.match(/\d+/)[0]);
+                    state.marsFiat += amount;
+                } else if (prize.includes('XP')) {
+                    const amount = parseInt(prize.match(/\d+/)[0]);
+                    addXP(amount);
+                }
+                
+                updateUI();
+                showToast(prize);
+                
+                setTimeout(() => {
+                    ticketRevealed = false;
+                    card.classList.remove('revealed');
+                    result.textContent = '';
+                }, 3000);
+            }, 500);
+        }
+
+        function buyTicket() {
+            if (!state.connected) {
+                showToast('Connect your wallet to purchase tickets!');
+                navigateTo('wallet');
+                return;
+            }
+            
+            state.tickets++;
+            addXP(10);
+            updateUI();
+            
+            document.getElementById('ticketNum').textContent = 
+                String(Math.floor(Math.random() * 200000)).padStart(6, '0');
+            
+            const soldEl = document.getElementById('ticketsSold');
+            let sold = parseInt(soldEl.textContent.replace(/,/g, ''));
+            sold++;
+            soldEl.textContent = sold.toLocaleString();
+            
+            showToast('Golden Ticket purchased! Good luck, Explorer!');
+        }
+
+        // ============ SPACE RIDE ============
+        let ridePhase = 0;
+        let rideInterval = null;
+
+        function launchRide() {
+            if (state.rideLaunched) return;
+            state.rideLaunched = true;
+            
+            const btn = document.getElementById('launchBtn');
+            btn.disabled = true;
+            btn.textContent = 'IN FLIGHT';
+            
+            const earth = document.getElementById('rideEarth');
+            const atmosphere = document.getElementById('rideAtmosphere');
+            const ship = document.getElementById('rideShip');
+            
+            earth.classList.add('launched');
+            atmosphere.classList.add('launched');
+            ship.classList.add('launched');
+            
+            document.getElementById('rideStatus').textContent = 'LAUNCH';
+            document.getElementById('rideStatusText').textContent = 'Engines firing! Ascending through atmosphere...';
+            
+            let altitude = 0;
+            let speed = 0;
+            
+            rideInterval = setInterval(() => {
+                altitude += Math.random() * 20 + 5;
+                speed = Math.min(28000, speed + Math.random() * 500 + 100);
+                
+                document.getElementById('rideAlt').textContent = Math.round(altitude) + ' km';
+                document.getElementById('rideSpd').textContent = Math.round(speed) + ' km/h';
+                
+                if (altitude > 100 && ridePhase === 0) {
+                    ridePhase = 1;
+                    document.getElementById('rideStatus').textContent = 'ORBIT';
+                    document.getElementById('rideStatusText').textContent = 'You\'ve reached the Kármán line — the edge of space!';
+                    showToast('Welcome to SPACE! You\'ve crossed 100km altitude!');
+                    addXP(50);
+                }
+                
+                if (altitude > 400 && ridePhase === 1) {
+                    ridePhase = 2;
+                    document.getElementById('rideStatus').textContent = 'DEEP SPACE';
+                    document.getElementById('rideStatusText').textContent = 'Incredible! You can see the curvature of Earth. This is the Overview Effect!';
+                    showToast('The Overview Effect! You see Earth as a pale blue dot.');
+                    addXP(100);
+                }
+                
+                if (altitude > 800) {
+                    clearInterval(rideInterval);
+                    document.getElementById('rideStatus').textContent = 'RETURN';
+                    document.getElementById('rideStatusText').textContent = 'Mission complete! Returning to base. You earned bonus XP!';
+                    showToast('Mission complete! +100 XP earned!');
+                    
+                    setTimeout(() => {
+                        earth.classList.remove('launched');
+                        atmosphere.classList.remove('launched');
+                        ship.classList.remove('launched');
+                        btn.disabled = false;
+                        btn.textContent = 'LAUNCH AGAIN';
+                        document.getElementById('rideAlt').textContent = '0 km';
+                        document.getElementById('rideSpd').textContent = '0 km/h';
+                        document.getElementById('rideStatus').textContent = 'STANDBY';
+                        document.getElementById('rideStatusText').textContent = 'Press LAUNCH to begin another journey!';
+                        state.rideLaunched = false;
+                        ridePhase = 0;
+                    }, 5000);
+                }
+            }, 200);
+        }
+
+        // ============ AI GUIDE ============
+        const aiResponses = {
+            'How do I stake land on Mars?': 'To stake land on Mars, head to the Real Estate section! Connect your wallet first, then browse available parcels. Each plot is a unique NFT that you can own forever. You earn MarsFiat through education modules and exploration to buy land. The earlier you stake, the better the locations!',
+            'What is MarsFiat currency?': 'MarsFiat (MF) is the native digital currency of the VRWAP metaverse. Inspired by how fiat money works on Earth — backed by trust and utility — MarsFiat is earned through exploration, education, and land staking. It can be used to purchase virtual real estate, enter sweepstakes, and trade within the metaverse. Think of it as the economic layer of our Mars colony!',
+            'Tell me about Web3': 'Web3 is the next evolution of the internet! While Web1 was read-only (static pages) and Web2 is read-write (social media, platforms), Web3 adds ownership. You truly own your data, digital assets, and identity through blockchain technology. In VRWAP, Web3 powers our land NFTs, MarsFiat currency, and decentralized governance. It\'s about giving power back to users!',
+            'How does the Golden Ticket work?': 'GoldenTicket2Space™ is a sweepstakes where you can win a real commercial space flight! Purchase a $9.99 ticket (or earn free entries through activities) for a 1-in-200,000 chance to win. Only 200,000 tickets exist. Proceeds support STEM education through our L.E.A.P partnership. It\'s like finding Wonka\'s golden ticket — but for real space travel!',
+            'What can I learn here?': 'We have 6 educational tracks: Web3 Fundamentals, Mars Science, Digital Currency, NFTs & Ownership, Space Exploration History, and Metaverse Architecture. Each module earns you MarsFiat and XP! Complete them all to level up and unlock special rewards. Learning is the best investment you can make!',
+            'default': 'Great question, Explorer! The VRWAP metaverse is constantly expanding. I can help you with Mars exploration, virtual real estate, MarsFiat currency, Web3 education, the GoldenTicket2Space sweepstakes, and more. Try asking about any of these topics, or explore the different sections using the navigation above!'
+        };
+
+        function sendAiMessage() {
+            const input = document.getElementById('aiInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            addAiMessage(msg, true);
+            input.value = '';
+            
+            setTimeout(() => {
+                let response = aiResponses[msg] || aiResponses['default'];
+                addAiMessage(response, false);
+                addXP(3);
+            }, 1000);
+        }
+
+        function askSuggestion(text) {
+            document.getElementById('aiInput').value = text;
+            sendAiMessage();
+        }
+
+        function addAiMessage(text, isUser) {
+            const container = document.getElementById('aiMessages');
+            const div = document.createElement('div');
+            div.className = `ai-message ${isUser ? 'user' : ''}`;
+            div.innerHTML = `
+                <div class="ai-avatar">${isUser ? '👨‍🚀' : '🤖'}</div>
+                <div class="ai-bubble">${text}</div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ============ EDUCATION ============
+        function startModule(module) {
+            const moduleNames = {
+                'web3': 'Web3 Fundamentals',
+                'mars': 'Mars Science 101',
+                'crypto': 'Digital Currency & MarsFiat',
+                'nft': 'NFTs & Digital Ownership',
+                'space': 'Space Exploration History',
+                'metaverse': 'Metaverse Architecture'
+            };
+            
+            addXP(15);
+            state.marsFiat += 10;
+            updateUI();
+            showToast(`Started "${moduleNames[module]}" module! +15 XP, +10 MF`);
+        }
+
+        // ============ WALLET ============
+        function connectWallet() {
+            if (state.connected) {
+                showToast('Wallet already connected!');
+                return;
+            }
+            
+            state.connected = true;
+            state.walletAddress = '0x' + Array.from({length: 40}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
+            state.marsFiat = 250;
+            
+            document.getElementById('walletAddress').textContent = state.walletAddress;
+            document.getElementById('connectWalletBtn').textContent = 'Connected';
+            document.getElementById('connectWalletBtn').style.background = '#22c55e';
+            document.getElementById('walletAssets').style.display = 'grid';
+            document.getElementById('walletActions').style.display = 'flex';
+            document.getElementById('navBalance').textContent = `${state.marsFiat} MF`;
+            
+            addXP(20);
+            updateUI();
+            showToast('Wallet connected! +250 MF welcome bonus!');
+        }
+
+        // ============ REWARDS SYSTEM ============
+        function addXP(amount) {
+            state.xp += amount;
+            
+            while (state.xp >= state.level * 100) {
+                state.xp -= state.level * 100;
+                state.level++;
+                showToast(`LEVEL UP! You're now Level ${state.level}!`);
+                state.marsFiat += state.level * 10;
+            }
+            
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('rewardMF').textContent = state.marsFiat + ' MF';
+            document.getElementById('rewardLevel').textContent = state.level;
+            document.getElementById('navBalance').textContent = `${state.marsFiat} MF`;
+            
+            const xpNeeded = state.level * 100;
+            const xpPercent = (state.xp / xpNeeded) * 100;
+            document.getElementById('xpFill').style.width = xpPercent + '%';
+            document.getElementById('xpText').textContent = `${state.xp}/${xpNeeded} XP`;
+            
+            if (state.connected) {
+                document.getElementById('mfBalance').textContent = state.marsFiat + ' MF';
+                document.getElementById('nftCount').textContent = state.nfts;
+                document.getElementById('ticketCount').textContent = state.tickets;
+                document.getElementById('xpLevel').textContent = state.level;
+            }
+        }
+
+        // ============ TOAST & MODAL ============
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function showModal(title, body) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // Initialize
+        updateUI();
+    </script>
 </body>
 </html>
