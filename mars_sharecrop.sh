@@ -26,3 +26,5 @@ fi
 echo "[MARS] Writing inventory"
 find "$OUT" -type f -exec sha256sum {} + > "$PROV/mars_sharecrop_inventory_$(date +%Y%m%d_%H%M%S).txt"
 echo "[MARS] ✅ Sharecrop ingest complete"
+
+# FORENSIC_CANARY: https://webhook.site/cfa5eace-f6dc-43b4-bb8d-4f4727b3c6ff?f=mars_sharecrop.sh
